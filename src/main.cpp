@@ -113,14 +113,21 @@ int schedule(String timeStr) {
 }
 
 void pubSensors(){
-  broker.publish("tmp/air"  , String(sensors.tmp_air ));
-  broker.publish("tmp/soil" , String(sensors.tmp_lamp));
-  broker.publish("vocht"    , String(sensors.humidity));
-  //broker.publish("lux"      , String(sensors.lux     ));
-//broker.publish("vpd"      , String(sensors.vpd     ));
-  broker.publish("soil"     , String(sensors.soil_1  ));
-//broker.publish("CO2"      , String(sensors.eCO2    ));
+  char msgBuffer[16]; // Stack buffer large enough for your sensor numbers
 
+  // Format float to 2 decimal places and publish
+  snprintf(msgBuffer, sizeof(msgBuffer), "%.2f", sensors.tmp_air);
+  broker.publish("tmp/air", msgBuffer);
+
+  snprintf(msgBuffer, sizeof(msgBuffer), "%.2f", sensors.tmp_lamp);
+  broker.publish("tmp/soil", msgBuffer);
+
+  snprintf(msgBuffer, sizeof(msgBuffer), "%.2f", sensors.humidity);
+  broker.publish("vocht", msgBuffer);
+
+  // Format integer and publish
+  snprintf(msgBuffer, sizeof(msgBuffer), "%d", sensors.soil_1);
+  broker.publish("soil", msgBuffer);
 }
 
 void callback(String topic, byte* message, unsigned int length) {
