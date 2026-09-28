@@ -15,6 +15,9 @@ private:
   const char* MQTT_password = "Halt2001"; 
   const char* MQTT_server   = "192.168.1.150";
   
+  // 1. Add a timer for Wi-Fi reconnects (e.g., every 15 seconds)
+  BlockNot wifiReconnectTimer = BlockNot(15, SECONDS);
+  
   // Timer: Probeer elke 10 seconden opnieuw te verbinden met MQTT
   BlockNot mqttReconnectTimer = BlockNot(10, SECONDS); 
 
@@ -26,7 +29,10 @@ public:
   void begin(){
     client.setCallback(callback); 
     client.setServer(MQTT_server, 1883);
-    // Let op: we blokkeren hier niet meer bij het opstarten!
+    
+    // Force a strict keep-alive and socket timeout to detect container resets
+    client.setKeepAlive(15);
+    client.setSocketTimeout(15);
   }
 
   void update(){ 
@@ -35,39 +41,40 @@ public:
     }
   }
 
-void handleConnection() {
-    // FIX: Actively force a WiFi reconnect if the router drops the DHCP lease
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("WiFi dropped. Forcing reconnect...");
-      WiFi.disconnect();
-      WiFi.reconnect();
-      return; // Stop here and wait for WiFi to recover
+  void handleConnection() {
+    if (WiFi.status() != WL_CONNECTED || WiFi.localIP() == IPAddress(0, 0, 0, 0)) {
+      if (wifiReconnectTimer.TRIGGERED) {
+        Serial.println("Network dropped or DHCP lost. Forcing reconnect...");
+        WiFi.disconnect();
+        WiFi.reconnect();
+      }
+      return; 
     }
 
-    // Alleen proberen als WiFi werkt, en MQTT niet verbonden is
     if (!client.connected()) {
       // Probeer het maximaal 1x per 10 seconden
       if (mqttReconnectTimer.TRIGGERED) {
         Serial.print("Attempting MQTT connection...");
+        
+        // Purge any lingering half-open socket states before reconnecting
+        client.disconnect(); 
         
         if (client.connect("ESP32KasKleinClient", MQTT_username, MQTT_password)) {
           Serial.println("connected");
           subscriptions();
         } else {
           Serial.print("failed, rc=");
-          Serial.println(client.state()); // Print foutcode en ga direct door
+          Serial.println(client.state()); 
         }
       }
     }
   }
 
-void publish(const char* topic, String message) {
-    // Gebruik een statische buffer in plaats van String concatenatie
+  void publish(const char* topic, const char* message) {
     if (client.connected()) {
       char fullTopic[64];
       snprintf(fullTopic, sizeof(fullTopic), "kasklein/%s", topic);
-      client.publish(fullTopic, message.c_str());
+      client.publish(fullTopic, message); // Directly use the C-string
     }
   }
-
 };
