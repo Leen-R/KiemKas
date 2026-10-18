@@ -2,7 +2,6 @@
 
 #include "DS18B20.h"
 
-#define ONE_WIRE_BUS 25
 
 OneWire oneWire(ONE_WIRE_BUS);
 DS18B20 sensor(&oneWire);

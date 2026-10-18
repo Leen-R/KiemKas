@@ -1,37 +1,46 @@
 #pragma once
+#include "Relay.h"
 
-BlockNot flowTimer (2000);
-BlockNot soilCheck (1000* 60* 3); //(8*3600 , SECONDS);
-Relay    waterpump (18);
+class Pomp {
+private:
+  BlockNot flowTimer{2000};
+  BlockNot soilCheck{1000 * 60 * 3}; 
+  Relay waterpump{PIN_WATERPUMP};
 
-
-class Pomp{
 public:
-  void update(){
+  void update() {
     blockWater();
     if(soilCheck.TRIGGERED)
       CheckSoilMoisture();
   }
 
-  void CheckSoilMoisture(){
-  int thirst = getThirstLevel();
-  if(thirst > 20){ 
-    set_milliLiters(thirst*10);
-    supplyWater();
+  void CheckSoilMoisture() {
+    int thirst = getThirstLevel();
+    if(thirst > 20){ 
+      set_milliLiters(thirst*10);
+      supplyWater();
+    }
   }
-}
 
-void set_milliLiters(int ml){
-  flowTimer.setDuration(floor(ml/0.0158)); //measured const 0.0158 ml/ms = 15.8 ml/s
-}
+  void set_milliLiters(int ml) {
+    flowTimer.setDuration(floor(ml/0.0158)); 
+  }
 
-void supplyWater(){
-  waterpump.on();
-  flowTimer.RESET;
-} 
+  void setDuration(int ms){
+    flowTimer.setDuration(ms);
+  }
 
-void blockWater(){
-  if(flowTimer.FIRST_TRIGGER)
+  void supplyWater() {
+    waterpump.on();
+    flowTimer.RESET;
+  } 
+
+  void turnOff(){
     waterpump.off();
+  }
+
+  void blockWater() {
+    if(flowTimer.FIRST_TRIGGER)
+      waterpump.off();
   }
 };

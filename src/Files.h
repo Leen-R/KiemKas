@@ -4,6 +4,7 @@
 
 int getThirstLevel();
 
+#include "Pins.h" 
 #include "WiFiSetup.h"
 #include "Broker.h"
 #include "Sensors/Sensors.h"

@@ -1,28 +1,27 @@
 #pragma once
+#include "Relay.h"
 
-BlockNot  fanUpdate  (3600, SECONDS);
-BlockNot activeTime (60000);
-Relay    fan_1 (17);
+class Fan {
+private:
+  BlockNot fanUpdate{3600, SECONDS};
+  BlockNot activeTime{60000};
+  Relay fan_1{PIN_FAN_1};
 
-
-class Fan{
 public:
-  void update(){
+  void update() {
     if(fanUpdate.TRIGGERED){
       fanOn();
     }
-
     FanOff();
   }
 
+  void fanOn() {
+    fan_1.on();
+    activeTime.RESET;
+  } 
 
-void fanOn(){
-  fan_1.on();
-  activeTime.RESET;
-} 
-
-void FanOff(){
-  if(activeTime.FIRST_TRIGGER)
-    fan_1.off();
+  void FanOff() {
+    if(activeTime.FIRST_TRIGGER)
+      fan_1.off();
   }
 };

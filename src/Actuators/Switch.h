@@ -1,25 +1,33 @@
 #pragma once
 
-class Switch{
-
+class Switch {
   int SWITCH_PIN;
+  bool state = false; // Tracks the current state to prevent spam
 
 public:
+  Switch(int pin = NO_PIN) { setup(pin); }
 
-  Switch(int pin = -1){
-    setup(pin);
-  }
-
-  void setup(int pin){
+  void setup(int pin) {
     SWITCH_PIN = pin;
-    pinMode(pin, OUTPUT);
+    if (SWITCH_PIN != NO_PIN) { 
+      pinMode(SWITCH_PIN, OUTPUT); 
+      digitalWrite(SWITCH_PIN, LOW); // Force hardware to match our 'false' state
+    }
   }
 
-  void on() { digitalWrite(SWITCH_PIN, HIGH); Serial.println("Switch " + String(SWITCH_PIN) + " ON!"); }
-  void off(){ digitalWrite(SWITCH_PIN, LOW);  Serial.println("Switch " + String(SWITCH_PIN) + " OFF!");}
+  void on() { 
+    if (SWITCH_PIN != NO_PIN && !state) { 
+      digitalWrite(SWITCH_PIN, HIGH); 
+      state = true;
+      Serial.printf("Switch %d ON!\n", SWITCH_PIN); 
+    }
+  }
+
+  void off() { 
+    if (SWITCH_PIN != NO_PIN && state) { 
+      digitalWrite(SWITCH_PIN, LOW);  
+      state = false;
+      Serial.printf("Switch %d OFF!\n", SWITCH_PIN); 
+    }
+  }
 };
-
-
-
-
-
